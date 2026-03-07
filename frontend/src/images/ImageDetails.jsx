@@ -1,16 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { fetchById } from "./ImageFetcher.js";
 
 export function ImageDetails() {
     const { imageId } = useParams();
-    const [image, _setImage] = useState(fetchById(imageId));
+
+    const [image, setImage] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        async function doFetch() {
+            try {
+                const response = await fetch("/api/images");
+                if (!response.ok) {
+                    throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
+                }
+
+                const images = await response.json();
+                const found = images.find((img) => img.id === imageId) || null;
+
+                setImage(found);
+                setError("");
+            } catch (err) {
+                setError(String(err?.message ?? err));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        doFetch();
+    }, [imageId]);
+
+    if (isLoading) {
+        return (
+            <>
+                <p>Loading...</p>
+            </>
+        );
+    }
+
+    if (error !== "") {
+        return (
+            <>
+                <p>{error}</p>
+            </>
+        );
+    }
+
     if (!image) {
         return (
             <>
                 <h2>Image not found</h2>
             </>
-        )
+        );
     }
 
     return (
@@ -19,5 +61,5 @@ export function ImageDetails() {
             <p>By {image.author.username}</p>
             <img className="ImageDetails-img" src={image.src} alt={image.name} />
         </>
-    )
+    );
 }
