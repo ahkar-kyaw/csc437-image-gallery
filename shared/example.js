@@ -7,4 +7,4 @@
  * - shared .jsx files are not supported, because .jsx requires a compilation process that is not yet set up in the
  *   backend
  */
-export const SHARED_TEST = "hello";
+export const SHARED_TEST = "Hello";
