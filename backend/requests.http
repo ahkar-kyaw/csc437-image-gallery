@@ -1,0 +1,41 @@
+### Get all images
+GET http://localhost:3000/api/images
+
+### Get one image by id (valid id)
+GET http://localhost:3000/api/images/69ae2ec8e31830e248c0aa0f
+
+### Get one image by id (404 because invalid ObjectId format)
+GET http://localhost:3000/api/images/notAValidObjectId
+
+### Get one image by id (404 because valid ObjectId format but does not exist)
+GET http://localhost:3000/api/images/000000000000000000000000
+
+### Rename image (good request, should return 204)
+PATCH http://localhost:3000/api/images/69ae2ec8e31830e248c0aa0f
+Content-Type: application/json
+
+{"name":"New name"}
+
+### Rename image (404 because invalid ObjectId format)
+PATCH http://localhost:3000/api/images/notAValidObjectId
+Content-Type: application/json
+
+{"name":"Anything"}
+
+### Rename image (404 because valid ObjectId format but does not exist)
+PATCH http://localhost:3000/api/images/000000000000000000000000
+Content-Type: application/json
+
+{"name":"Anything"}
+
+### Rename image (400 because request body missing name field)
+PATCH http://localhost:3000/api/images/69ae2ec8e31830e248c0aa0f
+Content-Type: application/json
+
+{}
+
+### Rename image (413 because name length > 100)
+PATCH http://localhost:3000/api/images/69ae2ec8e31830e248c0aa0f
+Content-Type: application/json
+
+{"name":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
