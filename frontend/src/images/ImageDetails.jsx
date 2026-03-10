@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { ImageNameEditor } from "./ImageNameEditor.jsx";
 
 export function ImageDetails() {
     const { imageId } = useParams();
@@ -10,18 +11,23 @@ export function ImageDetails() {
 
     useEffect(() => {
         async function doFetch() {
+        setIsLoading(true);
+        setError("");
+
         try {
-            const response = await fetch("/api/images");
+            const response = await fetch(`/api/images/${imageId}`);
+
+            if (response.status === 404) {
+            setImage(null);
+            return;
+            }
+
             if (!response.ok) {
             throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
             }
 
-            const images = await response.json();
-
-            const found = images.find((img) => String(img._id) === String(imageId)) || null;
-
-            setImage(found);
-            setError("");
+            const oneImage = await response.json();
+            setImage(oneImage);
         } catch (err) {
             setError(String(err?.message ?? err));
         } finally {
@@ -32,23 +38,24 @@ export function ImageDetails() {
         doFetch();
     }, [imageId]);
 
-    if (isLoading) {
-        return <p>Loading...</p>;
-    }
-
-    if (error !== "") {
-        return <p>{error}</p>;
-    }
-
-    if (!image) {
-        return <h2>Image not found</h2>;
-    }
+    if (isLoading) return <p>Loading...</p>;
+    if (error !== "") return <p>{error}</p>;
+    if (!image) return <h2>Image not found</h2>;
 
     return (
         <>
-        <h2>{image.name}</h2>
-        <p>By {image.author.username}</p>
-        <img className="ImageDetails-img" src={image.src} alt={image.name} />
+            <h2>{image.name}</h2>
+            <p>By {image.author?.username ?? "Unknown"}</p>
+
+            <ImageNameEditor
+                imageId={imageId}
+                initialValue={image.name}
+                onNameUpdated={(newName) =>
+                setImage((prev) => (prev ? { ...prev, name: newName } : prev))
+                }
+            />
+
+            <img className="ImageDetails-img" src={image.src} alt={image.name} />
         </>
     );
 }

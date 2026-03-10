@@ -19,16 +19,16 @@ export class ImageProvider {
         const usersCollectionName = getEnvVar("USERS_COLLECTION_NAME");
 
         const pipeline = [
-        {
-            $lookup: {
-            from: usersCollectionName,
-            localField: "authorId",
-            foreignField: "username",
-            as: "author",
+            {
+                $lookup: {
+                from: usersCollectionName,
+                localField: "authorId",
+                foreignField: "username",
+                as: "author",
+                },
             },
-        },
-        { $set: { author: { $first: "$author" } } },
-        { $unset: ["authorId"] },
+            { $set: { author: { $first: "$author" } } },
+            { $unset: ["authorId"] },
         ];
 
         return this.collection.aggregate(pipeline).toArray();

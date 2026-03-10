@@ -2,9 +2,14 @@ import { ObjectId } from "mongodb";
 
 const MAX_NAME_LENGTH = 100;
 
+function waitDuration(numMs) {
+  return new Promise((resolve) => setTimeout(resolve, numMs));
+}
+
 export function registerImageRoutes(app, imageProvider) {
     app.get("/api/images", async (req, res) => {
         try {
+            await waitDuration(1000);
             const images = await imageProvider.getAllImagesDenormalized();
             res.json(images);
             return;
