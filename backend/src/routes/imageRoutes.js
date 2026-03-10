@@ -29,6 +29,8 @@ export function registerImageRoutes(app, imageProvider) {
         }
 
         try {
+            await waitDuration(1000);
+            
             const image = await imageProvider.getOneImage(imageId);
 
             if (!image) {
