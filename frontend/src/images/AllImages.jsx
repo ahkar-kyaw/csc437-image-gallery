@@ -1,32 +1,36 @@
 import { useEffect, useState } from "react";
-
 import { ImageGrid } from "./ImageGrid.jsx";
 
-export function AllImages() {
+export function AllImages({ authToken }) {
     const [imageData, setImageData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         async function doFetch() {
-            try {
-                const response = await fetch("/api/images");
-                if (!response.ok) {
-                    throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
-                }
+        setIsLoading(true);
+        setError("");
 
-                const images = await response.json();
-                setImageData(images);
-                setError("");
-            } catch (err) {
-                setError(String(err?.message ?? err));
-            } finally {
-                setIsLoading(false);
+        try {
+            const response = await fetch("/api/images", {
+                headers: { Authorization: `Bearer ${authToken}` },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
             }
+
+            const images = await response.json();
+            setImageData(images);
+        } catch (err) {
+            setError(String(err?.message ?? err));
+        } finally {
+            setIsLoading(false);
+        }
         }
 
         doFetch();
-    }, []);
+    }, [authToken]);
 
     return (
         <>
@@ -34,7 +38,6 @@ export function AllImages() {
 
             {isLoading && <p>Loading...</p>}
             {error !== "" && <p>{error}</p>}
-
             {!isLoading && error === "" && <ImageGrid images={imageData} />}
         </>
     );

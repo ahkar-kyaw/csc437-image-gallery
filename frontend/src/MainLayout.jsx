@@ -4,8 +4,8 @@ import { Header } from "./Header.jsx";
 export function MainLayout() {
     return (
         <>
-            <Header />
-            <Outlet />
+        <Header />
+        <Outlet />
         </>
     );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function ImageNameEditor({ imageId, initialValue, onNameUpdated }) {
+export function ImageNameEditor({ authToken, imageId, initialValue, onNameUpdated }) {
     const [isEditingName, setIsEditingName] = useState(false);
     const [nameInput, setNameInput] = useState(initialValue || "");
     const [isRenaming, setIsRenaming] = useState(false);
@@ -19,15 +19,18 @@ export function ImageNameEditor({ imageId, initialValue, onNameUpdated }) {
         try {
             const response = await fetch(`/api/images/${imageId}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                },
                 body: JSON.stringify({ name: nameInput }),
             });
 
             if (response.status !== 204) {
                 let message = `Error: HTTP ${response.status} ${response.statusText}`;
                 try {
-                const data = await response.json();
-                if (data?.message) message = data.message;
+                    const data = await response.json();
+                    if (data?.message) message = data.message;
                 } catch {}
                 throw new Error(message);
             }
@@ -41,37 +44,38 @@ export function ImageNameEditor({ imageId, initialValue, onNameUpdated }) {
         }
     }
 
-    if (isEditingName) {
+    if (!isEditingName) {
         return (
             <div style={{ margin: "1em 0" }}>
-                <div aria-live="polite">
-                    {isRenaming && <p>Renaming image...</p>}
-                    {error !== "" && <p>{error}</p>}
-                </div>
-
-                <label>
-                    New Name
-                    <input
-                        required
-                        style={{ marginLeft: "0.5em" }}
-                        value={nameInput}
-                        disabled={isRenaming}
-                        onChange={(e) => setNameInput(e.target.value)}
-                    />
-                </label>
-                <button disabled={isRenaming || nameInput.length === 0} onClick={handleSubmitPressed}>
-                    Submit
-                </button>
-                <button disabled={isRenaming} onClick={() => setIsEditingName(false)}>
-                    Cancel
-                </button>
+                <button onClick={handleEditPressed}>Edit name</button>
             </div>
         );
     }
 
     return (
         <div style={{ margin: "1em 0" }}>
-        <button onClick={handleEditPressed}>Edit name</button>
+        <div aria-live="polite">
+            {isRenaming && <p>Renaming image...</p>}
+            {error !== "" && <p>{error}</p>}
+        </div>
+
+        <label>
+            New Name
+            <input
+            required
+            style={{ marginLeft: "0.5em" }}
+            value={nameInput}
+            disabled={isRenaming}
+            onChange={(e) => setNameInput(e.target.value)}
+            />
+        </label>
+
+        <button disabled={isRenaming || nameInput.length === 0} onClick={handleSubmitPressed}>
+            Submit
+        </button>
+        <button disabled={isRenaming} onClick={() => setIsEditingName(false)}>
+            Cancel
+        </button>
         </div>
     );
 }

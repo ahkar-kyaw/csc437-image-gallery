@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { ImageNameEditor } from "./ImageNameEditor.jsx";
 
-export function ImageDetails() {
+export function ImageDetails({ authToken }) {
     const { imageId } = useParams();
 
     const [image, setImage] = useState(null);
@@ -11,32 +11,35 @@ export function ImageDetails() {
 
     useEffect(() => {
         async function doFetch() {
-        setIsLoading(true);
-        setError("");
-
-        try {
-            const response = await fetch(`/api/images/${imageId}`);
-
-            if (response.status === 404) {
+            setIsLoading(true);
+            setError("");
             setImage(null);
-            return;
-            }
 
-            if (!response.ok) {
-            throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
-            }
+            try {
+                const response = await fetch(`/api/images/${imageId}`, {
+                    headers: { Authorization: `Bearer ${authToken}` },
+                });
 
-            const oneImage = await response.json();
-            setImage(oneImage);
-        } catch (err) {
-            setError(String(err?.message ?? err));
-        } finally {
-            setIsLoading(false);
-        }
+                if (response.status === 404) {
+                    setImage(null);
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Error: HTTP ${response.status} ${response.statusText}`);
+                }
+
+                const oneImage = await response.json();
+                setImage(oneImage);
+            } catch (err) {
+                setError(String(err?.message ?? err));
+            } finally {
+                setIsLoading(false);
+            }
         }
 
         doFetch();
-    }, [imageId]);
+    }, [imageId, authToken]);
 
     if (isLoading) return <p>Loading...</p>;
     if (error !== "") return <p>{error}</p>;
@@ -48,6 +51,7 @@ export function ImageDetails() {
             <p>By {image.author?.username ?? "Unknown"}</p>
 
             <ImageNameEditor
+                authToken={authToken}
                 imageId={imageId}
                 initialValue={image.name}
                 onNameUpdated={(newName) =>
