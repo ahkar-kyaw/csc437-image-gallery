@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 const MAX_NAME_LENGTH = 100;
 
 function waitDuration(numMs) {
-  return new Promise((resolve) => setTimeout(resolve, numMs));
+    return new Promise((resolve) => setTimeout(resolve, numMs));
 }
 
 export function registerImageRoutes(app, imageProvider) {
@@ -30,7 +30,6 @@ export function registerImageRoutes(app, imageProvider) {
 
         try {
             await waitDuration(1000);
-            
             const image = await imageProvider.getOneImage(imageId);
 
             if (!image) {
@@ -58,35 +57,52 @@ export function registerImageRoutes(app, imageProvider) {
         const newName = req.body?.name;
 
         if (typeof newName !== "string") {
-            res.status(400).send({
-                error: "Bad Request",
-                message: "Body must be JSON with a string field named name",
-            });
-            return;
+        res.status(400).send({
+            error: "Bad Request",
+            message: "Body must be JSON with a string field named name",
+        });
+        return;
         }
 
         if (newName.length > MAX_NAME_LENGTH) {
-            res.status(413).send({
-                error: "Content Too Large",
-                message: `Image name exceeds ${MAX_NAME_LENGTH} characters`,
+        res.status(413).send({
+            error: "Content Too Large",
+            message: `Image name exceeds ${MAX_NAME_LENGTH} characters`,
+        });
+        return;
+        }
+
+        try {
+        const authorId = await imageProvider.getImageAuthorId(imageId);
+
+        if (!authorId) {
+            res.status(404).send({ error: "Not Found", message: "Image does not exist" });
+            return;
+        }
+
+        const loggedInUsername = req.userInfo?.username;
+
+        if (authorId !== loggedInUsername) {
+            res.status(403).send({
+            error: "Forbidden",
+            message: "This user does not own this image",
             });
             return;
         }
 
-        try {
-            const matchedCount = await imageProvider.updateImageName(imageId, newName);
+        const matchedCount = await imageProvider.updateImageName(imageId, newName);
 
-            if (matchedCount === 0) {
-                res.status(404).send({ error: "Not Found", message: "Image does not exist" });
-                return;
-            }
-
-            res.status(204).send();
+        if (matchedCount === 0) {
+            res.status(404).send({ error: "Not Found", message: "Image does not exist" });
             return;
+        }
+
+        res.status(204).send();
+        return;
         } catch (err) {
-            console.error(err);
-            res.status(500).send();
-            return;
+        console.error(err);
+        res.status(500).send();
+        return;
         }
     });
 }

@@ -19,41 +19,55 @@ export class ImageProvider {
         const usersCollectionName = getEnvVar("USERS_COLLECTION_NAME");
 
         const pipeline = [
-            {
-                $lookup: {
-                from: usersCollectionName,
-                localField: "authorId",
-                foreignField: "username",
-                as: "author",
-                },
+        {
+            $lookup: {
+            from: usersCollectionName,
+            localField: "authorId",
+            foreignField: "username",
+            as: "author",
             },
-            { $set: { author: { $first: "$author" } } },
-            { $unset: ["authorId"] },
+        },
+        { $set: { author: { $first: "$author" } } },
+        { $unset: ["authorId"] },
         ];
 
         return this.collection.aggregate(pipeline).toArray();
     }
 
     async getOneImage(imageId) {
-        const dbName = getEnvVar("DB_NAME");
         const usersCollectionName = getEnvVar("USERS_COLLECTION_NAME");
-        const users = this.mongoClient.db(dbName).collection(usersCollectionName);
 
-        const image = await this.collection.findOne({ _id: new ObjectId(imageId) });
-        if (!image) return null;
+        const pipeline = [
+        { $match: { _id: new ObjectId(imageId) } },
+        {
+            $lookup: {
+            from: usersCollectionName,
+            localField: "authorId",
+            foreignField: "username",
+            as: "author",
+            },
+        },
+        { $set: { author: { $first: "$author" } } },
+        { $unset: ["authorId"] },
+        ];
 
-        const author = await users.findOne({ username: image.authorId });
-        const { authorId, ...rest } = image;
-
-        return { ...rest, author: author || null };
+        const results = await this.collection.aggregate(pipeline).toArray();
+        return results[0] || null;
     }
 
     async updateImageName(imageId, newName) {
         const result = await this.collection.updateOne(
-            { _id: new ObjectId(imageId) },
-            { $set: { name: newName } }
+        { _id: new ObjectId(imageId) },
+        { $set: { name: newName } }
         );
-
         return result.matchedCount;
+    }
+
+    async getImageAuthorId(imageId) {
+        const doc = await this.collection.findOne(
+        { _id: new ObjectId(imageId) },
+        { projection: { authorId: 1 } }
+        );
+        return doc?.authorId ?? null;
     }
 }
